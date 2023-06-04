@@ -21,3 +21,14 @@ License
 ----
 
 WTFPL
+
+---------------------------------------------------------------------------
+
+## More (Added by `Man Hung-Coeng`)
+
+Added support for `STM32F072` on 2023-06-04.
+
+To compile programs for `072`, specify `MCU_SERIES=F072` while executing `make`.
+
+---------------------------------------------------------------------------
+

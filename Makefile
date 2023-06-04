@@ -2,6 +2,7 @@
 # Generic Makefile (based on gcc)
 #
 # ChangeLog :
+#	2023-06-04 - Man Hung-Coeng: Support STM32F072x
 #	2017-02-10 - Several enhancements + project update mode
 #   2015-07-22 - first version
 # ------------------------------------------------
@@ -11,6 +12,10 @@
 ######################################
 TARGET = pcan_$(BOARD)_hw
 TARGET_VARIANT = $(shell echo $(BOARD) | tr  '[:lower:]' '[:upper:]')
+MCU_SERIES ?= F042
+ifeq ($(filter F042 F072, $(MCU_SERIES)),)
+$(error Alternative value of MCU_SERIES: F042 F072)
+endif
 
 #######################################
 # paths
@@ -22,10 +27,15 @@ BUILD_DIR = build-$(BOARD)
 # source
 ######################################
 # C sources
+USBD_DESC_SRC = Src/usbd_desc-fixup.c
+ifeq ($(shell ls $(USBD_DESC_SRC) 2> /dev/null),)
+USBD_DESC_SRC = Src/usbd_desc.c
+$(warning *** To make an identifiable PCAN driver, you have to modify some contents in $(USBD_DESC_SRC))
+endif
 C_SOURCES =  \
 Src/main.c \
 Src/usbd_conf.c \
-Src/usbd_desc.c \
+$(USBD_DESC_SRC) \
 Src/pcan_usb.c \
 Src/pcan_can.c \
 Src/pcan_led.c \
@@ -46,8 +56,13 @@ Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
 
 # ASM sources
+ifeq ($(MCU_SERIES), F042)
 ASM_SOURCES =  \
 startup_stm32f042x6.s
+else
+ASM_SOURCES =  \
+startup_stm32f072c8tx.s
+endif
 
 
 #######################################
@@ -90,9 +105,14 @@ MCU = $(CPU) -mthumb $(FPU) $(FLOAT-ABI)
 AS_DEFS = 
 
 # C defines
+ifeq ($(MCU_SERIES), F042)
+MCU_SERIES_DEF = -DSTM32F042x6
+else
+MCU_SERIES_DEF = -DSTM32F072xB
+endif
 C_DEFS =  \
 -DUSE_HAL_DRIVER \
--DSTM32F042x6 \
+$(MCU_SERIES_DEF) \
 -DNDEBUG \
 $(BOARD_DEFS)
 
@@ -129,7 +149,11 @@ CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 # LDFLAGS
 #######################################
 # link script
+ifeq ($(MCU_SERIES), F042)
 LDSCRIPT = STM32F042C6Tx_FLASH.ld
+else
+LDSCRIPT = STM32F072C8TX_FLASH.ld
+endif
 
 # libraries
 LIBS = -lc -lm -lnosys 

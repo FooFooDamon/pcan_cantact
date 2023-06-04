@@ -1,1 +1,2 @@
 /build*
+/Src/usbd_desc-fixup.c
