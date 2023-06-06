@@ -2,6 +2,7 @@
 # Generic Makefile (based on gcc)
 #
 # ChangeLog :
+#	2023-06-06 - Man Hung-Coeng: Generate *.dfu file(s)
 #	2023-06-04 - Man Hung-Coeng: Support STM32F072x
 #	2017-02-10 - Several enhancements + project update mode
 #   2015-07-22 - first version
@@ -166,19 +167,19 @@ LDFLAGS = $(MCU) -specs=nano.specs -T$(LDSCRIPT) $(LIBDIR) $(LIBS) -Wl,-Map=$(BU
 all: cantact_16 cantact_8 entree canable
 
 cantact_16:
-	$(MAKE) BOARD=cantact_16 DEBUG=0 OPT=-Os BOARD_FLAGS='-DHSE_VALUE=16000000' elf hex bin
+	$(MAKE) BOARD=cantact_16 DEBUG=0 OPT=-Os BOARD_FLAGS='-DHSE_VALUE=16000000' elf hex bin dfu
 
 cantact_8:
-	$(MAKE) BOARD=cantact_8 DEBUG=0 OPT=-Os BOARD_FLAGS='-DHSE_VALUE=8000000' elf hex bin
+	$(MAKE) BOARD=cantact_8 DEBUG=0 OPT=-Os BOARD_FLAGS='-DHSE_VALUE=8000000' elf hex bin dfu
 
 entree:
-	$(MAKE) BOARD=entree DEBUG=0 OPT=-Os BOARD_FLAGS='-DHSE_VALUE=0' elf hex bin
+	$(MAKE) BOARD=entree DEBUG=0 OPT=-Os BOARD_FLAGS='-DHSE_VALUE=0' elf hex bin dfu
 
 canable: 
-	$(MAKE) BOARD=canable DEBUG=0 OPT=-Os BOARD_FLAGS='-DHSE_VALUE=0' elf hex bin
+	$(MAKE) BOARD=canable DEBUG=0 OPT=-Os BOARD_FLAGS='-DHSE_VALUE=0' elf hex bin dfu
 
 ollie:
-	$(MAKE) BOARD=ollie DEBUG=0 OPT=-Os BOARD_FLAGS='-DHSE_VALUE=16000000' elf hex bin
+	$(MAKE) BOARD=ollie DEBUG=0 OPT=-Os BOARD_FLAGS='-DHSE_VALUE=16000000' elf hex bin dfu
 
 #######################################
 # build the application
@@ -192,6 +193,7 @@ vpath %.s $(sort $(dir $(ASM_SOURCES)))
 
 ELF_TARGET = $(BUILD_DIR)/$(TARGET).elf
 BIN_TARGET = $(BUILD_DIR)/$(TARGET).bin
+DFU_TARGET = $(BUILD_DIR)/$(TARGET).dfu
 HEX_TARGET = $(BUILD_DIR)/$(TARGET).hex
 
 $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR) 
@@ -206,12 +208,17 @@ $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(HEX) $< $@
-	
+
 $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
-	$(BIN) $< $@	
+	$(BIN) $< $@
+
+$(BUILD_DIR)/%.dfu: $(BUILD_DIR)/%.bin | $(BUILD_DIR)
+	cp $< $@ && dfu-suffix --add $@
 	
 $(BUILD_DIR):
-	mkdir $@		
+	mkdir $@
+
+dfu: $(DFU_TARGET)
 
 bin: $(BIN_TARGET)
 
