@@ -1,2 +1,4 @@
 /build*
 /Src/usbd_desc-fixup.c
+*.code-workspace
+.vscode
